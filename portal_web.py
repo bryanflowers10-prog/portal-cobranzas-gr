@@ -34,7 +34,7 @@ html_logo = ""
 if ruta_logo:
     with open(ruta_logo, "rb") as f:
         logo_b64 = base64.b64encode(f.read()).decode()
-    html_logo = f'<img src="data:image/png;base64,{logo_b64}" class="logo-corporativo" alt="GR Inversiones Inmobiliaria">'
+    html_logo = f'<img src="data:image/png;base64,{logo_b64}" width="100" style="margin-bottom: 8px;" alt="GR Inversiones Inmobiliaria">'
 
 # Estilos CSS corporativos con los colores Azul Marino (#1b3668) y Dorado (#f5a623) del nuevo logo
 st.markdown("""
