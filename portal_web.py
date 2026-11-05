@@ -2,15 +2,16 @@ import streamlit as st
 import pandas as pd
 import os
 import re
+import base64
 
-# Configuración de la página
+# Configuración de la página con el nombre oficial corregido
 st.set_page_config(
-    page_title="G Inversiones Inmobiliaria | Portal de Clientes",
+    page_title="GR Inversiones Inmobiliaria | Portal de Clientes",
     page_icon="🏢",
     layout="centered"
 )
 
-# Clave de acceso para tu panel administrativo (puedes cambiarla aquí)
+# Clave de acceso para tu panel administrativo
 CLAVE_ADMIN = "GR2026"
 ARCHIVO_EXCEL = "base_datos_pagos.xlsx"
 
@@ -22,7 +23,20 @@ PROYECTOS_OFICIALES = [
     "MISTI LODGE"
 ]
 
-# Estilos CSS corporativos adaptados al logo negro/blanco de G Inversiones Inmobiliaria
+# Detectar automáticamente el nuevo Logo GR3.png y convertirlo para incrustarlo dentro del banner blanco
+ruta_logo = None
+for candidato in ["Logo GR3.png", "Logo GR3.png.png", "logo.png", "logo.png.png", "LOGO.PNG", "logo.jpg"]:
+    if os.path.exists(candidato):
+        ruta_logo = candidato
+        break
+
+html_logo = ""
+if ruta_logo:
+    with open(ruta_logo, "rb") as f:
+        logo_b64 = base64.b64encode(f.read()).decode()
+    html_logo = f'<img src="data:image/png;base64,{logo_b64}" class="logo-corporativo" alt="GR Inversiones Inmobiliaria">'
+
+# Estilos CSS corporativos con los colores Azul Marino (#1b3668) y Dorado (#f5a623) del nuevo logo
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -31,52 +45,49 @@ st.markdown("""
     .tarjeta-cabecera {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-top: 6px solid #111111;
-        padding: 24px 20px;
-        border-radius: 14px;
+        border-top: 6px solid #1b3668;
+        border-bottom: 4px solid #f5a623;
+        padding: 28px 20px 24px 20px;
+        border-radius: 16px;
         text-align: center;
-        margin-bottom: 22px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .logo-corporativo {
+        max-width: 190px;
+        height: auto;
+        margin-bottom: 12px;
+        display: inline-block;
     }
     .tarjeta-cabecera h1 {
-        color: #111111;
-        margin: 8px 0 4px 0;
-        font-size: 24px;
+        color: #1b3668 !important;
+        margin: 4px 0 6px 0;
+        font-size: 25px;
         font-weight: 800;
-        letter-spacing: 1.5px;
+        letter-spacing: 1.2px;
     }
     .tarjeta-cabecera p {
-        color: #4a5568;
+        color: #4a5568 !important;
         margin: 0;
-        font-size: 14px;
+        font-size: 14.5px;
         font-weight: 500;
     }
     .pie-pagina {
         text-align: center;
-        color: #718096;
+        color: #a0aec0;
         font-size: 13px;
         margin-top: 45px;
         padding-top: 15px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid #2d3748;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Detectar automáticamente logo.png o logo.png.png
-ruta_logo = None
-for candidato in ["logo.png", "logo.png.png", "LOGO.PNG", "logo.jpg"]:
-    if os.path.exists(candidato):
-        ruta_logo = candidato
-        break
-
-if ruta_logo:
-    c_izq, c_centro, c_der = st.columns([1.3, 1, 1.3])
-    with c_centro:
-        st.image(ruta_logo, use_container_width=True)
-
-st.markdown("""
+# Mostrar el logo y el título juntos dentro de la tarjeta blanca para que luzca impecable en modo oscuro y claro
+st.markdown(f"""
     <div class="tarjeta-cabecera">
-        <h1>G INVERSIONES INMOBILIARIA</h1>
+        {html_logo}
+        <h1>GR INVERSIONES INMOBILIARIA</h1>
         <p>Portal Oficial de Autogestión — Consulta de Pagos y Boletas Electrónicas</p>
     </div>
 """, unsafe_allow_html=True)
@@ -327,7 +338,7 @@ with tab_admin:
 
 st.markdown("""
     <div class="pie-pagina">
-        <b>G Inversiones Inmobiliaria — Área de Cobranza y Postventa</b><br>
+        <b>GR Inversiones Inmobiliaria — Área de Cobranza y Postventa</b><br>
         Arequipa, Perú | Sistema de Consulta Disponible 24/7
     </div>
 """, unsafe_allow_html=True)
