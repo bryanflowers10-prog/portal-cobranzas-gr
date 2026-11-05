@@ -16,7 +16,7 @@ CLAVE_ADMIN = "GR2026"
 ARCHIVO_EXCEL = "base_datos_pagos.xlsx"
 
 PROYECTOS_OFICIALES = [
-    "JADE",
+    "RESIDENCIAL JADE",
     "VALLE DE PLATA",
     "VILLA VICTORIA",
     "JOYA DORADA",
@@ -54,9 +54,9 @@ st.markdown("""
         box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     }
     .logo-corporativo {
-        max-width: 190px;
+        max-width: 95px;
         height: auto;
-        margin-bottom: 12px;
+        margin-bottom: 6px;
         display: inline-block;
     }
     .tarjeta-cabecera h1 {
