@@ -137,40 +137,24 @@ else:
                     st.markdown("#### 📂 Historial de Vouchers y Boletas de Venta")
                     
                     for index, fila in resultados.iterrows():
-                        with st.container(border=True):
-                            c_info, c_img = st.columns([1.4, 1])
+                    with st.container(border=True):
+                        c_info, c_img = st.columns([1.4, 1])
+                        
+                        with c_info:
+                            st.markdown(f"### 📌 {fila['Cuota']}")
+                            st.write(f"**Fecha de registro:** {fila['Fecha_Registro']}")
+                            st.write(f"**Titular:** {fila['Cliente']}")
+                            st.write("")
                             
-                            with c_info:
-                                st.markdown(f"### 📌 {fila['Cuota']}")
-                                st.write(f"**Fecha de registro:** {fila['Fecha_Registro']}")
-                                st.write(f"**Titular:** {fila['Cliente']}")
-                                st.write("")
+                            enlace_pdf = str(fila.get("Ruta_Boleta", ""))
+                            if "http" in enlace_pdf:
+                                st.link_button("📥 Descargar Boleta Electrónica (PDF)", enlace_pdf, use_container_width=True, type="primary")
+                            else:
+                                st.warning("⚠️ La boleta aún no está vinculada en la nube.")
                                 
-                                ruta_pdf = fila["Ruta_Boleta"]
-                                if os.path.exists(ruta_pdf):
-                                    with open(ruta_pdf, "rb") as pdf_file:
-                                        nombre_limpio = f"Boleta_{proyecto_sel}_{lote_mostrar}_{fila['Cuota']}.pdf".replace(" ", "_")
-                                        st.download_button(
-                                            label="📥 Descargar Boleta Electrónica (PDF)",
-                                            data=pdf_file,
-                                            file_name=nombre_limpio,
-                                            mime="application/pdf",
-                                            key=f"pdf_{index}",
-                                            use_container_width=True,
-                                            type="primary"
-                                        )
-                                else:
-                                    st.warning("⚠️ El archivo PDF no se encuentra disponible localmente.")
-                                    
-                            with c_img:
-                                ruta_img = fila["Ruta_Voucher"]
-                                if os.path.exists(ruta_img):
-                                    with open(ruta_img, "rb") as img_file:
-                                        st.image(img_file.read(), caption=f"Voucher de pago ({fila['Cuota']})", use_container_width=True)
-
-st.markdown("""
-    <div class="pie-pagina">
-        <b>GR Inmobiliaria — Área de Cobranza y Postventa</b><br>
-        Arequipa, Perú | Atención de consultas sobre sus comprobantes de pago.
-    </div>
-""", unsafe_allow_html=True)
+                        with c_img:
+                            enlace_img = str(fila.get("Ruta_Voucher", ""))
+                            if "http" in enlace_img:
+                                st.link_button("👁️ Ver Voucher de Pago", enlace_img, use_container_width=True)
+                            else:
+                                st.info("Voucher no disponible")
