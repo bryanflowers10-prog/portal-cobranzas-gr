@@ -10,7 +10,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Estilos CSS personalizados para darle acabado corporativo y ocultar marcas de agua
+# Estilos CSS personalizados
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -66,12 +66,10 @@ st.markdown("""
 ARCHIVO_EXCEL = "base_datos_pagos.xlsx"
 
 def normalizar_lote(texto):
-    """Convierte 'u 9', 'U-09' o 'U9' en un formato estándar para que el cliente no falle al buscar"""
     limpio = re.sub(r'[^A-Z0-9]', '', str(texto).upper())
     return limpio
 
 def extraer_numero_cuota(texto):
-    """Extrae el número de la cuota para ordenarlas de menor a mayor (Cuota 1, Cuota 2...)"""
     numeros = re.findall(r'\d+', str(texto))
     return int(numeros[0]) if numeros else 999
 
@@ -105,7 +103,6 @@ else:
                 lote_buscado = normalizar_lote(mz_lote_input)
                 dni_buscado = re.sub(r'\D', '', dni_input)
                 
-                # Crear columna temporal normalizada para comparar sin importar guiones o espacios
                 df["Lote_Norm"] = df["Manzana_Lote"].apply(normalizar_lote)
                 df["DNI_Norm"] = df["DNI"].apply(lambda x: re.sub(r'\D', '', str(x)))
                 
@@ -118,7 +115,6 @@ else:
                 if resultados.empty:
                     st.error("❌ No se encontraron comprobantes con esos datos. Verifique haber elegido el Proyecto correcto, su Manzana/Lote y el DNI del titular.")
                 else:
-                    # Ordenar automáticamente por número de cuota (Cuota 1, Cuota 2, etc.)
                     resultados["Orden_Cuota"] = resultados["Cuota"].apply(extraer_numero_cuota)
                     resultados = resultados.sort_values(by="Orden_Cuota", ascending=True)
                     
@@ -127,7 +123,6 @@ else:
                     
                     st.success(f"✅ **Propietario(a):** {cliente_nombre}")
                     
-                    # Tarjetas de resumen para el cliente
                     m1, m2, m3 = st.columns(3)
                     m1.metric("Proyecto", proyecto_sel)
                     m2.metric("Ubicación (Mz/Lote)", lote_mostrar)
@@ -137,24 +132,31 @@ else:
                     st.markdown("#### 📂 Historial de Vouchers y Boletas de Venta")
                     
                     for index, fila in resultados.iterrows():
-                    with st.container(border=True):
-                        c_info, c_img = st.columns([1.4, 1])
-                        
-                        with c_info:
-                            st.markdown(f"### 📌 {fila['Cuota']}")
-                            st.write(f"**Fecha de registro:** {fila['Fecha_Registro']}")
-                            st.write(f"**Titular:** {fila['Cliente']}")
-                            st.write("")
+                        with st.container(border=True):
+                            c_info, c_img = st.columns([1.4, 1])
                             
-                            enlace_pdf = str(fila.get("Ruta_Boleta", ""))
-                            if "http" in enlace_pdf:
-                                st.link_button("📥 Descargar Boleta Electrónica (PDF)", enlace_pdf, use_container_width=True, type="primary")
-                            else:
-                                st.warning("⚠️ La boleta aún no está vinculada en la nube.")
+                            with c_info:
+                                st.markdown(f"### 📌 {fila['Cuota']}")
+                                st.write(f"**Fecha de registro:** {fila['Fecha_Registro']}")
+                                st.write(f"**Titular:** {fila['Cliente']}")
+                                st.write("")
                                 
-                        with c_img:
-                            enlace_img = str(fila.get("Ruta_Voucher", ""))
-                            if "http" in enlace_img:
-                                st.link_button("👁️ Ver Voucher de Pago", enlace_img, use_container_width=True)
-                            else:
-                                st.info("Voucher no disponible")
+                                enlace_pdf = str(fila.get("Ruta_Boleta", ""))
+                                if "http" in enlace_pdf:
+                                    st.link_button("📥 Descargar Boleta (PDF)", enlace_pdf, use_container_width=True, type="primary")
+                                else:
+                                    st.warning("⚠️ La boleta aún no está vinculada en la nube.")
+                                    
+                            with c_img:
+                                enlace_img = str(fila.get("Ruta_Voucher", ""))
+                                if "http" in enlace_img:
+                                    st.link_button("👁️ Ver Voucher", enlace_img, use_container_width=True)
+                                else:
+                                    st.info("Voucher no disponible")
+
+st.markdown("""
+    <div class="pie-pagina">
+        <b>GR Inmobiliaria — Área de Cobranza y Postventa</b><br>
+        Arequipa, Perú | Atención de consultas sobre sus comprobantes de pago.
+    </div>
+""", unsafe_allow_html=True)
