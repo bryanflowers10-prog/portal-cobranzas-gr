@@ -4,7 +4,7 @@ import os
 import re
 import base64
 
-# Configuración de la página con el nombre oficial corregido
+# Configuración de la página
 st.set_page_config(
     page_title="GR Inversiones Inmobiliaria | Portal de Clientes",
     page_icon="🏢",
@@ -23,7 +23,7 @@ PROYECTOS_OFICIALES = [
     "MISTI LODGE"
 ]
 
-# Detectar automáticamente el nuevo Logo GR3.png y convertirlo para incrustarlo dentro del banner blanco
+# Detectar automáticamente el logo
 ruta_logo = None
 for candidato in ["Logo GR3.png", "Logo GR3.png.png", "logo.png", "logo.png.png", "LOGO.PNG", "logo.jpg"]:
     if os.path.exists(candidato):
@@ -36,7 +36,7 @@ if ruta_logo:
         logo_b64 = base64.b64encode(f.read()).decode()
     html_logo = f'<img src="data:image/png;base64,{logo_b64}" width="100" style="margin-bottom: 8px;" alt="GR Inversiones Inmobiliaria">'
 
-# Estilos CSS corporativos con los colores Azul Marino (#1b3668) y Dorado (#f5a623) del nuevo logo
+# Estilos CSS corporativos
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -52,12 +52,6 @@ st.markdown("""
         text-align: center;
         margin-bottom: 24px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    }
-    .logo-corporativo {
-        max-width: 95px;
-        height: auto;
-        margin-bottom: 6px;
-        display: inline-block;
     }
     .tarjeta-cabecera h1 {
         color: #1b3668 !important;
@@ -83,7 +77,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Mostrar el logo y el título juntos dentro de la tarjeta blanca para que luzca impecable en modo oscuro y claro
 st.markdown(f"""
     <div class="tarjeta-cabecera">
         {html_logo}
@@ -98,6 +91,8 @@ def normalizar_lote(texto):
 def normalizar_proyecto(texto):
     limpio = str(texto).upper().strip()
     limpio = re.sub(r'^CUOTAS\s+', '', limpio).strip()
+    if limpio == "JADE":
+        return "RESIDENCIAL JADE"
     return limpio
 
 def extraer_numero_cuota(texto):
@@ -120,7 +115,6 @@ def cargar_datos():
 
 df = cargar_datos()
 
-# Pestañas: Vista de Clientes vs. Panel de Gestión Administrativa
 tab_cliente, tab_admin = st.tabs(["🔍 Consulta de Propietarios", "⚙️ Gestión de Clientes (Admin)"])
 
 # ==============================================================================
@@ -131,9 +125,7 @@ with tab_cliente:
         st.markdown("#### 🔐 Acceso para Propietarios")
         st.caption("Seleccione su proyecto e ingrese su ubicación y DNI del titular para visualizar sus vouchers y descargar sus boletas.")
         
-        proyectos_en_bd = sorted([p for p in df["Proyecto"].unique().tolist() if p])
-        lista_proyectos = sorted(list(set(PROYECTOS_OFICIALES + proyectos_en_bd)))
-        
+        lista_proyectos = sorted(PROYECTOS_OFICIALES)
         proyecto_sel = st.selectbox("📍 1. Proyecto Inmobiliario:", lista_proyectos)
         
         col1, col2 = st.columns(2)
@@ -156,7 +148,6 @@ with tab_cliente:
             df["Lote_Norm"] = df["Manzana_Lote"].apply(normalizar_lote)
             df["DNI_Norm"] = df["DNI"].apply(lambda x: re.sub(r'\D', '', str(x)))
             
-            # Filtra únicamente contratos ACTIVOS del propietario actual
             resultados = df[
                 (df["Proyecto"] == proyecto_sel) & 
                 (df["Lote_Norm"] == lote_buscado) & 
@@ -193,8 +184,13 @@ with tab_cliente:
                             st.write(f"**Titular:** {fila['Cliente']}")
                             st.write("")
                             
-                            # Soporte para PDF en carpeta del repositorio o link de Google Drive
                             ruta_pdf = str(fila.get("Ruta_Boleta", "")).strip().replace("\\", "/")
+                            # Compatibilidad si el archivo físico se guardó antes en la carpeta "JADE"
+                            if ruta_pdf and not os.path.exists(ruta_pdf) and "/JADE/" in ruta_pdf:
+                                alt_pdf = ruta_pdf.replace("/JADE/", "/RESIDENCIAL JADE/")
+                                if os.path.exists(alt_pdf):
+                                    ruta_pdf = alt_pdf
+                                    
                             if ruta_pdf.startswith("http"):
                                 st.link_button("📥 Descargar Boleta (PDF)", ruta_pdf, use_container_width=True, type="primary")
                             elif ruta_pdf and os.path.exists(ruta_pdf):
@@ -213,7 +209,6 @@ with tab_cliente:
                                 st.warning("⚠️ Boleta PDF en proceso de sincronización.")
                                 
                         with c_img:
-                            # Soporte para 1, 2 o más vouchers por cada boleta (separados por ';')
                             cadena_vouchers = str(fila.get("Ruta_Voucher", "")).strip()
                             lista_vouchers = [v.strip().replace("\\", "/") for v in cadena_vouchers.split(";") if v.strip()]
                             
@@ -251,14 +246,13 @@ with tab_admin:
         
         st.divider()
         
-        # OPCIÓN 1: TRASPASO DE PROPIETARIO
         if opcion_admin.startswith("1."):
             st.markdown("##### 🔄 Cambio de Titular / Traspaso de Lote")
             st.caption("Transfiere todas las cuotas activas de un lote al nuevo propietario (actualiza Nombre y DNI).")
             
             c1, c2 = st.columns(2)
             with c1:
-                proy_traspaso = st.selectbox("Proyecto del Lote:", sorted(list(set(PROYECTOS_OFICIALES + df["Proyecto"].unique().tolist()))))
+                proy_traspaso = st.selectbox("Proyecto del Lote:", sorted(PROYECTOS_OFICIALES))
             with c2:
                 lote_traspaso = st.text_input("Manzana y Lote a traspasar (Ej: U-9):")
                 
@@ -286,14 +280,13 @@ with tab_admin:
                     df.to_excel(ARCHIVO_EXCEL, index=False)
                     st.success(f"✅ Se actualizaron {cantidad} cuotas del lote {lote_traspaso} a nombre de {nuevo_nombre} (DNI: {nuevo_dni}).")
 
-        # OPCIÓN 2: RESOLUCIÓN DE CONTRATO (NUEVA VENTA DESDE CUOTA 1)
         elif opcion_admin.startswith("2."):
             st.markdown("##### 📁 Resolución de Contrato (Liberar Lote)")
             st.caption("Archiva los pagos del cliente anterior como 'RESUELTO' para que no se mezclen cuando el nuevo comprador empiece a pagar desde la Cuota 1.")
             
             c1, c2 = st.columns(2)
             with c1:
-                proy_res = st.selectbox("Proyecto:", sorted(list(set(PROYECTOS_OFICIALES + df["Proyecto"].unique().tolist()))))
+                proy_res = st.selectbox("Proyecto:", sorted(PROYECTOS_OFICIALES))
             with c2:
                 lote_res = st.text_input("Manzana y Lote resuelto (Ej: U-9):")
                 
@@ -313,7 +306,6 @@ with tab_admin:
                     df.to_excel(ARCHIVO_EXCEL, index=False)
                     st.success(f"✅ Se archivaron {cantidad} cuotas del titular anterior ({titular_ant}). El lote {lote_res} está libre para registrar al nuevo propietario desde la Cuota 1.")
 
-        # OPCIÓN 3: EDITOR COMPLETO TIPO EXCEL
         elif opcion_admin.startswith("3."):
             st.markdown("##### 📝 Editor General de la Base de Datos")
             st.caption("Nota: Si una boleta tiene 2 vouchers, coloca sus rutas o links de Drive en 'Ruta_Voucher' separados por punto y coma (;).")
