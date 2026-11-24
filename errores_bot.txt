@@ -1,0 +1,1 @@
+[23/11/2026 17:21:38] Error general procesando comprobante: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)
